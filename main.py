@@ -1,10 +1,7 @@
-from pprint import pprint
 import requests
 from bs4 import BeautifulSoup
 from fake_headers import Headers
-import re
 
-new_dict = []
 
 def get_headers():
     headers = Headers(browser='random_browser', os='random_os').generate()
@@ -23,22 +20,26 @@ def get_urls():
 
 def array():
     for link in get_urls():
+        response = requests.get(link, headers=get_headers())
+        soup = BeautifulSoup(response.text, 'lxml')
+        data = soup.find('div', class_='main-content')
+        url = link
+        adress = {'data-qa': 'vacancy-view-raw-address'}
+        salary = data.find('span', class_='bloko-header-section-2 bloko-header-section-2_lite').text
+        name = data.find('h1').text
         try:
-            response = requests.get(link, headers=get_headers())
-            soup = BeautifulSoup(response.text, 'lxml')
-            data = soup.find('div', class_='main-content')
-            researh = r'.*((D|d)jango).*((F|f)lask).*'
-            if re.match(researh, data.find('div',class_='vacancy-title').text):
-                new_dict.append({
-                    'url':link,
-                    'salary':data.find('span', class_='bloko-header-section-2 bloko-header-section-2_lite').text,
-                    'name':data.find('div',class_='vacancy-title').text,
-                    'city':data.find('div', class_='vacancy-section').text
-                })
-            pprint(new_dict)
+            city = data.find(attrs=adress).text
         except AttributeError:
-            continue
-
+            city = 'Город не указан'
+        print(url, salary, name, city)
+        # yield url, salary, name, city
 
 
 array()
+
+# pattern = r'.*((D|d)jango).*((F|f)lask).*'
+# if re.search(pattern, (data.find('div', class_='vacancy-description').text)):
+#     try:
+#         new_list.append({'url':link, 'salary': salary, 'name': name, 'city': city})
+#     except:
+#         new_list.append('вакансия в архиве')

@@ -1,6 +1,10 @@
+import re
+from pprint import pprint
 import requests
 from bs4 import BeautifulSoup
 from fake_headers import Headers
+import json
+new_list = []
 
 
 def get_headers():
@@ -18,28 +22,50 @@ def get_urls():
         yield link
 
 
-def array():
+def get_array():
     for link in get_urls():
         response = requests.get(link, headers=get_headers())
         soup = BeautifulSoup(response.text, 'lxml')
         data = soup.find('div', class_='main-content')
-        url = link
+        pattern = r'.*((D|d)jango).*((F|f)lask).*'
         adress = {'data-qa': 'vacancy-view-raw-address'}
-        salary = data.find('span', class_='bloko-header-section-2 bloko-header-section-2_lite').text
-        name = data.find('h1').text
         try:
             city = data.find(attrs=adress).text
         except AttributeError:
             city = 'Город не указан'
-        print(url, salary, name, city)
-        # yield url, salary, name, city
 
+        if re.search(pattern, (data.text)):
+            new_list.append({
+                'url': link,
+                'salary': data.find('span', class_='bloko-header-section-2 bloko-header-section-2_lite').text.replace('\xa0', ''),
+                'name': data.find('h1').text,
+                'city': city
+            })
+        else:
+            continue
 
-array()
+def get_json():
+    with open('vacancy.json', 'w', encoding='utf-8') as v:
+        json.dump(new_list, v, ensure_ascii=False)
 
-# pattern = r'.*((D|d)jango).*((F|f)lask).*'
-# if re.search(pattern, (data.find('div', class_='vacancy-description').text)):
-#     try:
-#         new_list.append({'url':link, 'salary': salary, 'name': name, 'city': city})
-#     except:
-#         new_list.append('вакансия в архиве')
+get_array()
+pprint(new_list)
+get_json()
+# def get_array():
+#     for link in get_urls():
+#         response = requests.get(link, headers=get_headers())
+#         soup = BeautifulSoup(response.text, 'lxml')
+#         data = soup.find('div', class_='main-content')
+#         url = link
+#         adress = {'data-qa': 'vacancy-view-raw-address'}
+#         salary = data.find('span', class_='bloko-header-section-2 bloko-header-section-2_lite').text
+#         name = data.find('h1').text
+#         try:
+#             city = data.find(attrs=adress).text
+#         except AttributeError:
+#             city = 'Город не указан'
+#         print(url, salary, name, city)
+#         pattern = r'.*((D|d)jango).*((F|f)lask).*'
+#         if re.match(pattern, (data.find('a', class_='serp-item__title').text)) == True :
+#             new_list.append({'url':link, 'salary': salary, 'name': name, 'city': city})
+#         print(new_list)
